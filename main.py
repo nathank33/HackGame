@@ -30,17 +30,15 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.image, self.rect = load_png('ball.png')
 		self.x, self.y = 0, 0
 		self.speedx, self.speedy = 0, 0
-		self.rect.move([50,50])
 
 	def update(self):
 		self.x += self.speedx
 		self.y += self.speedy
-		self.rect.move([self.x, self.y])
+		self.rect = self.rect.move(self.x, self.y)
 		pygame.event.pump()
 
 class Player(MoveableSprite):
 	shot_time = 0
-
 
 	def __init__(self):
 		MoveableSprite.__init__(self)
