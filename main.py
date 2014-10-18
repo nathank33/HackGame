@@ -29,11 +29,13 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.image, self.rect = load_png('ball.png')
 		self.x, self.y = 0, 0
 		self.speedx, self.speedy = 0, 0
+		self.rect.move([50,50])
 
 	def update(self):
 		self.x += self.speedx
 		self.y += self.speedy
 		self.rect.move([self.x, self.y])
+		pygame.event.pump()
 
 class Player(MoveableSprite):
 	def __init__(self):
@@ -61,10 +63,13 @@ def main():
 	background = background.convert()
 	background.fill((0, 0, 0))
 
-    # Initialise clock
+	screen.blit(background, (0, 0))
+	pygame.display.flip()
 	clock = pygame.time.Clock()
 
 	player = Player()
+	playersprites = pygame.sprite.RenderPlain(player)
+
 	while True:
 		clock.tick(60)
 		for obj in all_objects:
@@ -80,4 +85,11 @@ def main():
 
 			#elif event.type == SHOOT and player.can_shoot:
 			#	player.shoot()
+
+		screen.blit(background, player.rect, player.rect)
+		playersprites.update()
+		playersprites.draw(screen)
+		pygame.display.flip()
+		player.speedx = 1
+		player.update()
 main()
