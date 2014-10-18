@@ -8,6 +8,7 @@ screen_width, screen_height = 640, 480
 gravity = -0.5
 all_objects = []
 shot_time = 1
+player = None
 
 def load_png(name):
         """ Load image and return image object"""
@@ -82,6 +83,7 @@ def main():
 	pygame.display.flip()
 	clock = pygame.time.Clock()
 
+	global player
 	player = Player()
 	playersprites = pygame.sprite.RenderPlain(player)
 	player.speedx = 1
@@ -104,5 +106,4 @@ def main():
 		playersprites.update()
 		playersprites.draw(screen)
 		pygame.display.flip()
-		#player.speedx = 1
 main()
