@@ -5,7 +5,7 @@ from pygame.locals import *
 
 jump_speed = 3
 screen_width, screen_height = 640, 480
-gravity = -0.5
+gravity = +0.5
 all_objects = []
 shot_time = 1
 player = None
@@ -33,10 +33,15 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.speedx, self.speedy = 0, 0
 
 	def update(self):
+		self.speedy += gravity
 		self.x += self.speedx
 		self.y += self.speedy
 		self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
-		print(self.speedx)
+		if self.y + self.image.get_height() >= screen_height:
+			self.speedy = 0
+			self.y = screen_height - self.image.get_height()
+		
+		
 
 class Player(MoveableSprite):
 	shot_time = 0
@@ -55,7 +60,8 @@ class Player(MoveableSprite):
 		return False
 
 	def jump(self):
-		print("Handle Jump")
+		if self.y == screen_height - self.image.get_height():
+			return
 
 
 	def shoot(self):
