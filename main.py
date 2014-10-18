@@ -4,6 +4,7 @@ import time
 jump_speed = 3
 width, height = 640, 480
 gravity = -0.5
+all_objects = []
 
 class MoveableSprite(pygame.sprite.Sprite):
 	def __init__(self):
@@ -11,6 +12,10 @@ class MoveableSprite(pygame.sprite.Sprite):
 		#self.image, self.rect = load_png('ball.png') # Change this
 		self.x, self.y = 0, 0
 		self.speedx, self.speedy = 0, 0
+
+	def update(self):
+		self.x += self.speedx
+		self.y += self.speedy
 
 class Player(MoveableSprite):
 	def __init__(self):
@@ -43,6 +48,9 @@ def main():
 
     while True:
     	clock.tick(60)
+    	for obj in all_objects:
+    		objects.update()
+
     	for event in pygame.event.get():
     		if event.type == QUIT:
     			return
