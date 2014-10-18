@@ -25,6 +25,7 @@ class Bullet(MoveableSprite):
 width, height = 640, 480
 def main():
 	#Initialize Pygame
+	player = Player('Hero')
 	pygame.init()
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption('Hack Game')
@@ -35,5 +36,13 @@ def main():
 
     while True:
     	clock.tick(60)
+    	for event in pygame.event.get():
+    		if event.type == QUIT:
+    			return
+    		elif event.type == JUMP and player.can_jump:
+    			player.jump()
+    		#elif event.type == SHOOT and player.can_shoot:
+    		#	player.shoot()
+
 
     	# Handle all of the events
