@@ -30,11 +30,13 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.image, self.rect = load_png('ball.png')
 		self.x, self.y = 0, 0
 		self.speedx, self.speedy = 0, 0
+		self.rect.move([50,50])
 
 	def update(self):
 		self.x += self.speedx
 		self.y += self.speedy
 		self.rect.move([self.x, self.y])
+		pygame.event.pump()
 
 class Player(MoveableSprite):
 	shot_time = 0
@@ -78,10 +80,13 @@ def main():
 	background = background.convert()
 	background.fill((0, 0, 0))
 
-    # Initialise clock
+	screen.blit(background, (0, 0))
+	pygame.display.flip()
 	clock = pygame.time.Clock()
 
 	player = Player()
+	playersprites = pygame.sprite.RenderPlain(player)
+
 	while True:
 		clock.tick(60)
 		for obj in all_objects:
@@ -90,8 +95,22 @@ def main():
 		for event in pygame.event.get():
 			if event.type == QUIT:
 				return
-			#elif event.type == JUMP and player.can_jump:
-			#	player.jump()
+			elif event.type == K_SPACE and player.can_jump:
+				player.jump
+			elif event.type == K_LEFT or event.type == K_RIGHT:
+				player.speed.x = 4
+
 			#elif event.type == SHOOT and player.can_shoot:
 			#	player.shoot()
+<<<<<<< HEAD
 main()
+=======
+
+		screen.blit(background, player.rect, player.rect)
+		playersprites.update()
+		playersprites.draw(screen)
+		pygame.display.flip()
+		player.speedx = 1
+		player.update()
+main()
+>>>>>>> 907df2349550fc2417bff674b58bce5e3f3d3992
