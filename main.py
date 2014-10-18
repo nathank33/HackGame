@@ -102,10 +102,6 @@ def main():
 
 			#elif event.type == SHOOT and player.can_shoot:
 			#	player.shoot()
-<<<<<<< HEAD
-main()
-=======
-
 		screen.blit(background, player.rect, player.rect)
 		playersprites.update()
 		playersprites.draw(screen)
@@ -113,4 +109,3 @@ main()
 		player.speedx = 1
 		player.update()
 main()
->>>>>>> 907df2349550fc2417bff674b58bce5e3f3d3992
