@@ -4,7 +4,7 @@ import os
 from pygame.locals import *
 
 jump_speed = 3
-width, height = 640, 480
+screen_width, screen_height = 640, 480
 gravity = -0.5
 all_objects = []
 shot_time = 1
@@ -28,14 +28,14 @@ class MoveableSprite(pygame.sprite.Sprite):
 	def __init__(self):
 		pygame.sprite.Sprite.__init__(self)
 		self.image, self.rect = load_png('ball.png')
-		self.x, self.y = 0, 0
+		self.x, self.y = 0, screen_height - self.image.get_height()
 		self.speedx, self.speedy = 0, 0
 
 	def update(self):
 		self.x += self.speedx
 		self.y += self.speedy
-		self.rect = self.rect.move(self.x, self.y)
-		pygame.event.pump()
+		self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+		print(self.speedx)
 
 class Player(MoveableSprite):
 	shot_time = 0
@@ -71,7 +71,7 @@ def main():
 	#Initialize Pygame
 	
 	pygame.init()
-	screen = pygame.display.set_mode((width, height))
+	screen = pygame.display.set_mode((screen_width, screen_height))
 	pygame.display.set_caption('Hack Game')
 
 	background = pygame.Surface(screen.get_size())
@@ -84,7 +84,7 @@ def main():
 
 	player = Player()
 	playersprites = pygame.sprite.RenderPlain(player)
-
+	player.speedx = 1
 	while True:
 		clock.tick(60)
 		for obj in all_objects:
@@ -104,6 +104,5 @@ def main():
 		playersprites.update()
 		playersprites.draw(screen)
 		pygame.display.flip()
-		player.speedx = 1
-		player.update()
+		#player.speedx = 1
 main()
