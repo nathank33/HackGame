@@ -22,18 +22,7 @@ import ants
 import graphics
 from graphics import shift_point
 from ucb import *
-from math import pi
-import math
-import os
-import random
-
 STRATEGY_SECONDS = 3
-INSECT_FILES = {'Worker': 'img/ant_harvester.gif',
-                'Thrower': 'img/ant_thrower.gif',
-                'Long': 'img/ant_longthrower.gif',
-                'Short': 'img/ant_shortthrower.gif',
-                'Harvester': 'img/ant_harvester.gif',
-                'Fire': 'img/ant_fire.gif',
                 'Bodyguard': 'img/ant_weeds.gif',
                 'Hungry': 'img/ant_hungry.gif',
                 'Slow': 'img/ant_freeze.gif',
