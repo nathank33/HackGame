@@ -7,6 +7,7 @@ jump_speed = 3
 width, height = 640, 480
 gravity = -0.5
 all_objects = []
+shot_time = 1
 
 def load_png(name):
         """ Load image and return image object"""
@@ -36,6 +37,9 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.rect.move([self.x, self.y])
 
 class Player(MoveableSprite):
+	shot_time = 0
+
+
 	def __init__(self):
 		MoveableSprite.__init__(self)
 
@@ -45,13 +49,18 @@ class Player(MoveableSprite):
 		return False
 
 	def can_shoot(self):
-		print('Return True or False')
+		if time.time() - self.shot_time >= shot_time:
+			return True
+		return False
 
 	def jump(self):
 		print("Handle Jump")
 
+
 	def shoot(self):
-		print("Handle Shooting")
+		if can_shoot:
+			self.shot_time = time.time()
+
 	
 
 class Bullet(MoveableSprite):
