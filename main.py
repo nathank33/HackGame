@@ -73,8 +73,8 @@ def main():
 		for event in pygame.event.get():
 			if event.type == QUIT:
 				return
-			#elif event.type == JUMP and player.can_jump:
-			#	player.jump()
-			#elif event.type == SHOOT and player.can_shoot:
+			elif event.type == K_SPACE and player.can_jump:
+				player.jump()
+			#elif event.type == K_Z and player.can_shoot:
 			#	player.shoot()
 main()
