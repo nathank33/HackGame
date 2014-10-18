@@ -1,4 +1,9 @@
 import pygame
+import time
+
+jump_speed = 3
+width, height = 640, 480
+gravity = -0.5
 
 class MoveableSprite(pygame.sprite.Sprite):
 	def __init__(self):
@@ -22,7 +27,6 @@ class Bullet(MoveableSprite):
 	def __init__(self):
 		MoveableSprite.__init__(self)
 
-width, height = 640, 480
 def main():
 	#Initialize Pygame
 	player = Player('Hero')
@@ -33,6 +37,9 @@ def main():
 	background = pygame.Surface(screen.get_size())
     background = background.convert()
     background.fill((0, 0, 0))
+
+    # Initialise clock
+    clock = pygame.time.Clock()
 
     while True:
     	clock.tick(60)
