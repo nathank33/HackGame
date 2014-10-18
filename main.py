@@ -11,6 +11,13 @@ class Player(MoveableSprite):
 	def __init__(self):
 		MoveableSprite.__init__(self)
 
+	def can_jump(self):
+		if self.speedy == 0:
+			return True
+		return False
+
+	def can_shoot(self):
+
 	def jump(self):
 		print("Handle Jump")
 
