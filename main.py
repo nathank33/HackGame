@@ -74,7 +74,10 @@ def main():
 			if event.type == QUIT:
 				return
 			elif event.type == K_SPACE and player.can_jump:
-				player.jump()
-			#elif event.type == K_Z and player.can_shoot:
+				player.jump
+			elif event.type == K_LEFT or event.type == K_RIGHT:
+				player.speed.x = 4
+
+			#elif event.type == SHOOT and player.can_shoot:
 			#	player.shoot()
 main()
