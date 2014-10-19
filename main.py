@@ -47,15 +47,26 @@ class MoveableSprite(pygame.sprite.Sprite):
 			self.speedy = 0
 			self.y = screen_height - self.image.get_height()
 
+		if self.x < -200 or self.x > screen_width + 200:
+			self.remove()
+
+	def remove(self):
+		objects.remove(self)
+		objectsprites.remove(self)
+
 class Player(MoveableSprite):
-	shot_time = 0
+	shoot_delay = 0.5
+	def __init__(self, image):
+		MoveableSprite.__init__(self, image)
+		self.shot_time = 0
+
 	def can_jump(self):
 		if self.speedy == 0:
 			return True 
 		return False
 
 	def can_shoot(self):
-		if time.time() - self.shot_time >= shot_time:
+		if time.time() - self.shot_time >= shoot_delay:
 			return True
 		return False
 
@@ -64,8 +75,13 @@ class Player(MoveableSprite):
 			self.speedy = -5
 
 	def shoot(self):
-		if can_shoot:
+		if can_shoot():
 			self.shot_time = time.time()
+			bullet = Bullet('bullet.png')
+			bullet.x = self.x + self.image.get_width() + 50
+			bullet.y = self.y + self.image.get_height / 2
+			bullet.speedx = 6
+
 
 	def update(self):
 		MoveableSprite.update(self)
@@ -76,12 +92,12 @@ class Player(MoveableSprite):
 			if obj != self:
 				if self.rect.colliderect(obj.rect):
 					# Check right and left
-					if self.speedx > 0 and obj.x > self.x:
+					"""if self.speedx > 0 and obj.x > self.x:
 						self.speedx = 0
 						obj.speedx = 0
 					elif self.speedx < 0 and obj.x < self.x:
 						self.speedx = 0 
-						obj.speedx = 0
+						obj.speedx = 0"""
 
 class Bullet(MoveableSprite):
 	def something():
@@ -97,7 +113,6 @@ class Enemy(MoveableSprite):
 
 def main():
 	#Initialize Pygame
-	
 	pygame.init()
 	screen = pygame.display.set_mode((screen_width, screen_h))
 	pygame.display.set_caption('Hack Game')
