@@ -12,6 +12,7 @@ objects = []
 shot_time = 1
 player = None
 score = 0
+heart1, heart2, heart3 = None, None, None
 
 def load_png(name):
         """ Load image and return image object"""
@@ -108,7 +109,15 @@ class Player(MoveableSprite):
 		for obj in objects:
 			if type(obj) == Enemy:
 				if self.rect.colliderect(obj.rect):
-					obj.remove()			
+					obj.remove()	
+					if heart3 in objects:
+						heart3.remove()
+					elif heart2 in objects:
+						heart2.remove()
+					else:
+						heart1.remove()
+						self.remove()
+
 
 class Bullet(MoveableSprite):
 	def __init__(self, image):
@@ -145,16 +154,16 @@ def main():
 
 	background_image = pygame.image.load("background.jpg").convert()
 
-	font = pygame.font.Font(None,36)
+	"""font = pygame.font.Font(None,36)
 	text = font.render("Score: " + str(score), 1, (50,0,200))
 	textpos = text.get_rect()
-	textpos.centerx = background_image.get_rect().centerx
-	background_image.blit(text,textpos)
+	textpos.centerx = background_image.get_rect().centerx"""
+	#background_image.blit(text,textpos)
 
 	screen.blit(background_image, (0, 0))
 	pygame.display.flip()
 	clock = pygame.time.Clock()
-
+	global heart1, heart2, heart3
 	heart1 = NonMoveableSprite('heart.png')
 	heart1.x, heart1.y = 0, 0
 	heart2 = NonMoveableSprite('heart.png')
@@ -197,6 +206,9 @@ def main():
 		elif rightdown and not leftdown and player.speedx < 0:
 			player.speedx = movespeed
 			
+		#text = font.render("Score: " + str(score), 1, (50,0,200))
+		#screen.blit(text, (200, 50))
+
 		for obj in objects:
 			screen.blit(background_image, obj.rect, obj.rect)
 			obj.renderer.update()
@@ -205,8 +217,15 @@ def main():
 				objects.remove(obj)
 				screen.blit(background_image, obj.rect, obj.rect)
 		pygame.display.flip()
+		generateMonsters()		
+def generateMonsters():
+	if random.randint(1, 80) == 1: 
+		enemy = Enemy(random.choice(['zelda.png', 'mario.png', 'megaman.png']))
+		enemy.speedx *= 0.50 + random.random()
+		if random.randint(1, 3) == 1:
+			enemy.speedx *= -1
+			enemy.x = -50
+		if random.randint(1, 3) == 1:
+			enemy.speedy = -random.randint(3,10)
 		
-
-		if i % 100 == 0:
-			Enemy(random.choice(['zelda.png', 'mario.png', 'megaman.png']))
 main()
