@@ -63,7 +63,7 @@ class NonMoveableSprite(MoveableSprite):
 		return
 
 class Player(MoveableSprite):
-	shoot_delay = 0.5
+	shoot_delay = 0
 	def __init__(self, image):
 		MoveableSprite.__init__(self, image)
 		self.shot_time = 0
@@ -117,7 +117,7 @@ class Player(MoveableSprite):
 						heart2.remove()
 					else:
 						heart1.remove()
-						self.speedy = -3
+						self.speedy = -1.5
 						self.allow_gravity = False
 
 
@@ -222,20 +222,20 @@ def main():
 		generateMonsters()
 		if heart1 not in objects:
 			font = pygame.font.Font(None,100)
-			text = font.render("YOU DIED!", 1, (255,0,00))
+			text = font.render("YOU DIED! SCORE: " +str(score), 1, (255,0,00))
 			textpos = text.get_rect()
 			textpos.centerx = background_image.get_rect().centerx
 			background_image.blit(text,textpos)
 			screen.blit(background_image, (0, 0))
 
 def generateMonsters():
-	if random.randint(1, 80) == 1: 
+	if random.randint(1, 70) == 1: 
 		enemy = Enemy(random.choice(['zelda.png', 'mario.png', 'megaman.png']))
-		enemy.speedx *= 0.50 + random.random()
+		enemy.speedx *= 0.65 + random.random()
 		if random.randint(1, 3) == 1:
 			enemy.speedx *= -1
 			enemy.x = -50
 		if random.randint(1, 3) == 1:
-			enemy.speedy = -random.randint(3,10)
+			enemy.speedy = -random.randint(3,8)
 		
 main()
