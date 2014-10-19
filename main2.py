@@ -121,7 +121,7 @@ def main():
 	screen = pygame.display.set_mode((screen_width, screen_h))
 	pygame.display.set_caption('Hack Game')
 
-	background_image = pygame.image.load("background.jpg").convert()
+	background_image = pygame.image.load("data/background.jpg").convert()
 
 	font = pygame.font.Font(None,36)
 	text = font.render("Score: " + str(score), 1, (50,0,200))
@@ -133,17 +133,27 @@ def main():
 	pygame.display.flip()
 	clock = pygame.time.Clock()
 
+	# font = pygame.font.Font(None,36)
+	# text = font.render("Hello there", 1, (100,100,100))
+	# textpos = text.get_rect()
+	# textpos.centerx = background.get_rect().centerx
+	# background.blit(text,textpos)
+
+	global player
+<<<<<<< HEAD
 	heart1 = NonMoveableSprite('heart.png')
 	heart1.x, heart1.y = 0, 0
 	heart2 = NonMoveableSprite('heart.png')
 	heart2.x, heart2.y = 64, 0
 	heart3 = NonMoveableSprite('heart.png')
 	heart3.x, heart3.y = 128, 0
-
-	global player
+	player = Player('ball.png')
+	player.speedx = 1
+=======
 	player = Player('player.png')
 	leftdown, rightdown = False, False
 	movespeed = 4	
+>>>>>>> 2025c627dee4ad04bfd582205d586c191538b48d
 	i = 0
 	while True:
 		i += 1
@@ -183,5 +193,5 @@ def main():
 		pygame.display.flip()
 
 		if i % 100 == 0:
-			Enemy(random.choice(['zelda.png', 'mario.png', 'megaman.png']))
+			Enemy(random.choice(['ball.png', 'ball.png', 'ball.png']))
 main()
