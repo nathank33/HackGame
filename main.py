@@ -54,10 +54,10 @@ class MoveableSprite(pygame.sprite.Sprite):
 			self.remove()
 
 	def remove(self):
-		#if self in objects:
-		objects.remove(self)
-		#if self.renderer in objectsprites:
-		objectsprites.remove(self.renderer)
+		self.x = 1000
+		self.y = 1000
+		#objects.remove(self)
+		#objectsprites.remove(self.renderer)
 
 class NonMoveableSprite(MoveableSprite):
 
@@ -89,10 +89,9 @@ class Player(MoveableSprite):
 		if self.can_shoot():
 			self.shot_time = time.time()
 			bullet = Bullet('bullet.png')
-			bullet.x = self.x + self.image.get_width() + 50
+			bullet.x = self.x + self.image.get_width() + 10
 			bullet.y = self.y + self.image.get_height() / 2
 			bullet.speedx = 6
-
 
 	def update(self):
 		MoveableSprite.update(self)
@@ -200,6 +199,6 @@ def main():
 			sprite.draw(screen)
 		pygame.display.flip()
 
-		if i % 100 == 0:
+		if i % 200 == 0:
 			Enemy(random.choice(['zelda.png', 'mario.png', 'megaman.png']))
 main()
