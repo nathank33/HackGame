@@ -68,6 +68,7 @@ class Player(MoveableSprite):
 		self.shot_time = 0
 		self.leftimage, self.leftrect = load_png('player_left.png')
 		self.rightimage, self.rightrect = load_png('player_right.png')
+		self.image = self.rightimage
 
 	def can_jump(self):
 		if self.speedy == 0:
@@ -87,9 +88,13 @@ class Player(MoveableSprite):
 		if self.can_shoot():
 			self.shot_time = time.time()
 			bullet = Bullet('bullet.png')
-			bullet.x = self.x + self.image.get_width() + 50
 			bullet.y = self.y + self.image.get_height() / 2
-			bullet.speedx = 6
+			if self.image == self.rightimage:
+				bullet.speedx = 6
+				bullet.x = self.x + self.image.get_width()
+			else:
+				bullet.speedx = -6
+				bullet.x = self.x
 
 	def update(self):
 		MoveableSprite.update(self)
@@ -158,7 +163,7 @@ def main():
 	heart3.x, heart3.y = 128, 0
 
 	global player
-	player = Player('player.png')
+	player = Player('player_right.png')
 	leftdown, rightdown = False, False
 	movespeed = 4	
 	i = 0
