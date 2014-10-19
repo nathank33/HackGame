@@ -5,8 +5,9 @@ from pygame.locals import *
 
 jump_speed = 3
 screen_width, screen_height = 640, 480
-gravity = +0.5
+gravity = +0.1
 all_objects = []
+objectsprites = []
 shot_time = 1
 player = None
 
@@ -31,6 +32,7 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.image, self.rect = load_png('ball.png')
 		self.x, self.y = 0, screen_height - self.image.get_height()
 		self.speedx, self.speedy = 0, 0
+		objectsprites.append(pygame.sprite.RenderPlain(self))
 
 	def update(self):
 		self.speedy += gravity
@@ -60,9 +62,8 @@ class Player(MoveableSprite):
 		return False
 
 	def jump(self):
-		if self.y == screen_height - self.image.get_height():
-			return
-
+		if self.can_jump():
+			self.speedy = -5
 
 	def shoot(self):
 		if can_shoot:
@@ -91,7 +92,6 @@ def main():
 
 	global player
 	player = Player()
-	playersprites = pygame.sprite.RenderPlain(player)
 	player.speedx = 1
 	while True:
 		clock.tick(60)
@@ -101,15 +101,18 @@ def main():
 		for event in pygame.event.get():
 			if event.type == QUIT:
 				return
-			elif event.type == K_SPACE and player.can_jump:
-				player.jump
+			elif event.type == KEYDOWN:
+				if event.key == K_SPACE:
+					player.jump()
+					print("Jumping")
 			elif event.type == K_LEFT or event.type == K_RIGHT:
 				player.speed.x = 4
 
 			#elif event.type == SHOOT and player.can_shoot:
 			#	player.shoot()
 		screen.blit(background, player.rect, player.rect)
-		playersprites.update()
-		playersprites.draw(screen)
+		for sprite in objectsprites:
+			sprite.update()
+			sprite.draw(screen)
 		pygame.display.flip()
 main()
