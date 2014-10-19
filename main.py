@@ -5,12 +5,14 @@ import random
 from pygame.locals import *
 
 jump_speed = 3
-screen_width, screen_height = 640, 480
+screen_width, screen_h = 800, 500
+screen_height = 500 - 110
 gravity = +0.1
 objects = []
 objectsprites = []
 shot_time = 1
 player = None
+score = 0
 
 def load_png(name):
         """ Load image and return image object"""
@@ -97,16 +99,26 @@ def main():
 	#Initialize Pygame
 	
 	pygame.init()
-	screen = pygame.display.set_mode((screen_width, screen_height))
+	screen = pygame.display.set_mode((screen_width, screen_h))
 	pygame.display.set_caption('Hack Game')
 
-	background = pygame.Surface(screen.get_size())
-	background = background.convert()
-	background.fill((0, 0, 0))
+	background_image = pygame.image.load("background.jpg").convert()
 
-	screen.blit(background, (0, 0))
+	font = pygame.font.Font(None,36)
+	text = font.render("Score: " + str(score), 1, (50,0,200))
+	textpos = text.get_rect()
+	textpos.centerx = background_image.get_rect().centerx
+	background_image.blit(text,textpos)
+
+	screen.blit(background_image, (0, 0))
 	pygame.display.flip()
 	clock = pygame.time.Clock()
+
+	# font = pygame.font.Font(None,36)
+	# text = font.render("Hello there", 1, (100,100,100))
+	# textpos = text.get_rect()
+	# textpos.centerx = background.get_rect().centerx
+	# background.blit(text,textpos)
 
 	global player
 	player = Player('ball.png')
@@ -128,7 +140,7 @@ def main():
 			#elif event.type == SHOOT and player.can_shoot:
 			#	player.shoot()
 		for obj in objects:
-			screen.blit(background, obj.rect, obj.rect)
+			screen.blit(background_image, obj.rect, obj.rect)
 		for sprite in objectsprites:
 			sprite.update()
 			sprite.draw(screen)
