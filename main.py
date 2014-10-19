@@ -6,7 +6,7 @@ from pygame.locals import *
 jump_speed = 3
 screen_width, screen_height = 640, 480
 gravity = +0.1
-all_objects = []
+objects = []
 objectsprites = []
 shot_time = 1
 player = None
@@ -27,11 +27,12 @@ def load_png(name):
 
 
 class MoveableSprite(pygame.sprite.Sprite):
-	def __init__(self):
+	def __init__(self, image):
 		pygame.sprite.Sprite.__init__(self)
-		self.image, self.rect = load_png('ball.png')
+		self.image, self.rect = load_png(image)
 		self.x, self.y = 0, screen_height - self.image.get_height()
 		self.speedx, self.speedy = 0, 0
+		objects.append(self)
 		objectsprites.append(pygame.sprite.RenderPlain(self))
 
 	def update(self):
@@ -42,15 +43,9 @@ class MoveableSprite(pygame.sprite.Sprite):
 		if self.y + self.image.get_height() >= screen_height:
 			self.speedy = 0
 			self.y = screen_height - self.image.get_height()
-		
-		
 
 class Player(MoveableSprite):
 	shot_time = 0
-
-	def __init__(self):
-		MoveableSprite.__init__(self)
-
 	def can_jump(self):
 		if self.speedy == 0:
 			return True 
@@ -69,11 +64,33 @@ class Player(MoveableSprite):
 		if can_shoot:
 			self.shot_time = time.time()
 
-	
+	def update(self):
+		MoveableSprite.update(self)
+		self.check_collision()
+
+	def check_collision(self):
+		for obj in objects:
+			if obj != self:
+				if self.rect.colliderect(obj.rect):
+					# Check right and left
+					if self.speedx > 0 and obj.x > self.x:
+						self.speedx = 0
+						obj.speedx = 0
+					elif self.speedx < 0 and obj.x < self.x:
+						self.speedx = 0 
+						obj.speedx = 0
 
 class Bullet(MoveableSprite):
-	def __init__(self):
-		MoveableSprite.__init__(self)
+	def something():
+		return
+
+class Enemy(MoveableSprite):
+	def __init__(self, image):
+		MoveableSprite.__init__(self, image)
+		self.speedx = -3
+		self.x = screen_width
+		self.y = screen_height - self.image.get_height()
+
 
 def main():
 	#Initialize Pygame
@@ -91,13 +108,12 @@ def main():
 	clock = pygame.time.Clock()
 
 	global player
-	player = Player()
+	player = Player('ball.png')
 	player.speedx = 1
+	i = 0
 	while True:
+		i += 1
 		clock.tick(60)
-		for obj in all_objects:
-			objects.update()
-
 		for event in pygame.event.get():
 			if event.type == QUIT:
 				return
@@ -110,9 +126,13 @@ def main():
 
 			#elif event.type == SHOOT and player.can_shoot:
 			#	player.shoot()
-		screen.blit(background, player.rect, player.rect)
+		for obj in objects:
+			screen.blit(background, obj.rect, obj.rect)
 		for sprite in objectsprites:
 			sprite.update()
 			sprite.draw(screen)
 		pygame.display.flip()
+
+		if i % 200 == 0:
+			Enemy('ball.png')
 main()
