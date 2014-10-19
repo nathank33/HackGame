@@ -6,7 +6,7 @@ from pygame.locals import *
 
 jump_speed = 3
 screen_width, screen_h = 800, 500
-screen_height = 500 - 110
+screen_height = screen_h - 110
 gravity = +0.1
 objects = []
 objectsprites = []
@@ -35,8 +35,9 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.image, self.rect = load_png(image)
 		self.x, self.y = 0, screen_height - self.image.get_height()
 		self.speedx, self.speedy = 0, 0
+		self.renderer = pygame.sprite.RenderPlain(self)
+		objectsprites.append(self.renderer)
 		objects.append(self)
-		objectsprites.append(pygame.sprite.RenderPlain(self))
 
 	def update(self):
 		self.speedy += gravity
@@ -51,8 +52,10 @@ class MoveableSprite(pygame.sprite.Sprite):
 			self.remove()
 
 	def remove(self):
+		#if self in objects:
 		objects.remove(self)
-		objectsprites.remove(self)
+		#if self.renderer in objectsprites:
+		objectsprites.remove(self.renderer)
 
 class Player(MoveableSprite):
 	shoot_delay = 0.5
@@ -89,15 +92,9 @@ class Player(MoveableSprite):
 
 	def check_collision(self):
 		for obj in objects:
-			if obj != self:
+			if type(obj) == Enemy:
 				if self.rect.colliderect(obj.rect):
-					# Check right and left
-					"""if self.speedx > 0 and obj.x > self.x:
-						self.speedx = 0
-						obj.speedx = 0
-					elif self.speedx < 0 and obj.x < self.x:
-						self.speedx = 0 
-						obj.speedx = 0"""
+					obj.remove()			
 
 class Bullet(MoveableSprite):
 	def something():
@@ -109,6 +106,7 @@ class Enemy(MoveableSprite):
 		self.speedx = -3
 		self.x = screen_width
 		self.y = screen_height - self.image.get_height()
+		self.health = 1
 
 
 def main():
@@ -136,8 +134,9 @@ def main():
 	# background.blit(text,textpos)
 
 	global player
-	player = Player('ball.png')
-	player.speedx = 1
+	player = Player('player.png')
+	leftdown, rightdown = False, False
+	movespeed = 4	
 	i = 0
 	while True:
 		i += 1
@@ -148,9 +147,24 @@ def main():
 			elif event.type == KEYDOWN:
 				if event.key == K_SPACE:
 					player.jump()
-					print("Jumping")
-			elif event.type == K_LEFT or event.type == K_RIGHT:
-				player.speed.x = 4
+				elif event.key == K_LEFT:
+					leftdown = True
+					player.speedx = -movespeed
+				elif event.key == K_RIGHT:
+					rightdown = True
+					player.speedx = movespeed
+			elif event.type == KEYUP:
+				if event.key == K_LEFT:
+					leftdown = False
+				elif event.key == K_RIGHT:
+					rightdown = False
+
+		if not leftdown and not rightdown and player.speedx != 0:
+			player.speedx = 0
+		elif leftdown and not rightdown and player.speedx > 0:
+			player.speedx = -movespeed
+		elif rightdown and not leftdown and player.speedx < 0:
+			player.speedx = movespeed
 
 			#elif event.type == SHOOT and player.can_shoot:
 			#	player.shoot()
