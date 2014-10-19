@@ -66,6 +66,8 @@ class Player(MoveableSprite):
 	def __init__(self, image):
 		MoveableSprite.__init__(self, image)
 		self.shot_time = 0
+		self.leftimage, self.leftrect = load_png('player_left.png')
+		self.rightimage, self.rightrect = load_png('player_right.png')
 
 	def can_jump(self):
 		if self.speedy == 0:
@@ -92,6 +94,10 @@ class Player(MoveableSprite):
 	def update(self):
 		MoveableSprite.update(self)
 		self.check_collision()
+		if self.speedx < 0:
+			self.image = self.leftimage
+		elif self.speedx > 0:
+			self.image = self.rightimage	
 
 	def check_collision(self):
 		for obj in objects:
