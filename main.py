@@ -36,11 +36,13 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.x, self.y = 0, screen_height - self.image.get_height()
 		self.speedx, self.speedy = 0, 0
 		self.renderer = pygame.sprite.RenderPlain(self)
+		self.allow_gravity = True
 		objectsprites.append(self.renderer)
 		objects.append(self)
 
 	def update(self):
-		self.speedy += gravity
+		if self.allow_gravity:
+			self.speedy += gravity
 		self.x += self.speedx
 		self.y += self.speedy
 		self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
@@ -75,7 +77,7 @@ class Player(MoveableSprite):
 		return False
 
 	def can_shoot(self):
-		if time.time() - self.shot_time >= shoot_delay:
+		if time.time() - self.shot_time >= self.shoot_delay:
 			return True
 		return False
 
@@ -84,11 +86,11 @@ class Player(MoveableSprite):
 			self.speedy = -5
 
 	def shoot(self):
-		if can_shoot():
+		if self.can_shoot():
 			self.shot_time = time.time()
 			bullet = Bullet('bullet.png')
 			bullet.x = self.x + self.image.get_width() + 50
-			bullet.y = self.y + self.image.get_height / 2
+			bullet.y = self.y + self.image.get_height() / 2
 			bullet.speedx = 6
 
 
@@ -103,8 +105,22 @@ class Player(MoveableSprite):
 					obj.remove()			
 
 class Bullet(MoveableSprite):
-	def something():
-		return
+	def __init__(self, image):
+		MoveableSprite.__init__(self, image)
+		self.allow_gravity = False
+
+	def update(self):
+		MoveableSprite.update(self)
+		self.check_collision()
+
+	def check_collision(self):
+		global score
+		for obj in objects:
+			if type(obj) == Enemy:
+				if self.rect.colliderect(obj.rect):
+					obj.remove()
+					self.remove()
+					score += 10
 
 class Enemy(MoveableSprite):
 	def __init__(self, image):
@@ -160,6 +176,8 @@ def main():
 				elif event.key == K_RIGHT:
 					rightdown = True
 					player.speedx = movespeed
+				elif event.key == K_z:
+					player.shoot()					
 			elif event.type == KEYUP:
 				if event.key == K_LEFT:
 					leftdown = False
