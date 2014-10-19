@@ -1,6 +1,7 @@
 import pygame
 import time
 import os
+import random
 from pygame.locals import *
 
 jump_speed = 3
@@ -133,6 +134,6 @@ def main():
 			sprite.draw(screen)
 		pygame.display.flip()
 
-		if i % 200 == 0:
-			Enemy('ball.png')
+		if i % 100 == 0:
+			Enemy(random.choice(['ball.png', 'ball.png', 'ball.png']))
 main()
