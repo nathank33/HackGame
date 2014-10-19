@@ -57,6 +57,12 @@ class MoveableSprite(pygame.sprite.Sprite):
 		#if self.renderer in objectsprites:
 		objectsprites.remove(self.renderer)
 
+class NonMoveableSprite(MoveableSprite):
+
+	def update(self):
+		self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+		return
+
 class Player(MoveableSprite):
 	shoot_delay = 0.5
 	def __init__(self, image):
@@ -127,11 +133,12 @@ def main():
 	pygame.display.flip()
 	clock = pygame.time.Clock()
 
-	# font = pygame.font.Font(None,36)
-	# text = font.render("Hello there", 1, (100,100,100))
-	# textpos = text.get_rect()
-	# textpos.centerx = background.get_rect().centerx
-	# background.blit(text,textpos)
+	heart1 = NonMoveableSprite('heart.png')
+	heart1.x, heart1.y = 0, 0
+	heart2 = NonMoveableSprite('heart.png')
+	heart2.x, heart2.y = 64, 0
+	heart3 = NonMoveableSprite('heart.png')
+	heart3.x, heart3.y = 128, 0
 
 	global player
 	player = Player('player.png')
