@@ -9,7 +9,6 @@ screen_width, screen_h = 800, 500
 screen_height = screen_h - 110
 gravity = +0.1
 objects = []
-objectsprites = []
 shot_time = 1
 player = None
 score = 0
@@ -37,7 +36,7 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.speedx, self.speedy = 0, 0
 		self.renderer = pygame.sprite.RenderPlain(self)
 		self.allow_gravity = True
-		objectsprites.append(self.renderer)
+		self.removing = False
 		objects.append(self)
 
 	def update(self):
@@ -54,11 +53,8 @@ class MoveableSprite(pygame.sprite.Sprite):
 			self.remove()
 
 	def remove(self):
-		self.x = 1000
-		self.y = 1000
-		#objects.remove(self)
-		#objectsprites.remove(self.renderer)
-
+		self.removing = True
+		
 class NonMoveableSprite(MoveableSprite):
 
 	def update(self):
@@ -89,7 +85,7 @@ class Player(MoveableSprite):
 		if self.can_shoot():
 			self.shot_time = time.time()
 			bullet = Bullet('bullet.png')
-			bullet.x = self.x + self.image.get_width() + 10
+			bullet.x = self.x + self.image.get_width() + 50
 			bullet.y = self.y + self.image.get_height() / 2
 			bullet.speedx = 6
 
@@ -189,16 +185,17 @@ def main():
 			player.speedx = -movespeed
 		elif rightdown and not leftdown and player.speedx < 0:
 			player.speedx = movespeed
-
-			#elif event.type == SHOOT and player.can_shoot:
-			#	player.shoot()
+			
 		for obj in objects:
 			screen.blit(background_image, obj.rect, obj.rect)
-		for sprite in objectsprites:
-			sprite.update()
-			sprite.draw(screen)
+			obj.renderer.update()
+			obj.renderer.draw(screen)
+			if obj.removing:
+				objects.remove(obj)
+				screen.blit(background_image, obj.rect, obj.rect)
 		pygame.display.flip()
+		
 
-		if i % 200 == 0:
+		if i % 100 == 0:
 			Enemy(random.choice(['zelda.png', 'mario.png', 'megaman.png']))
 main()
