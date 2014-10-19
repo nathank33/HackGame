@@ -67,6 +67,7 @@ class Player(MoveableSprite):
 	def __init__(self, image):
 		MoveableSprite.__init__(self, image)
 		self.shot_time = 0
+		self.x = screen_width / 2
 		self.leftimage, self.leftrect = load_png('player_left.png')
 		self.rightimage, self.rightrect = load_png('player_right.png')
 		self.image = self.rightimage
@@ -116,7 +117,8 @@ class Player(MoveableSprite):
 						heart2.remove()
 					else:
 						heart1.remove()
-						self.remove()
+						self.speedy = -3
+						self.allow_gravity = False
 
 
 class Bullet(MoveableSprite):
@@ -217,7 +219,15 @@ def main():
 				objects.remove(obj)
 				screen.blit(background_image, obj.rect, obj.rect)
 		pygame.display.flip()
-		generateMonsters()		
+		generateMonsters()
+		if heart1 not in objects:
+			font = pygame.font.Font(None,100)
+			text = font.render("YOU DIED!", 1, (255,0,00))
+			textpos = text.get_rect()
+			textpos.centerx = background_image.get_rect().centerx
+			background_image.blit(text,textpos)
+			screen.blit(background_image, (0, 0))
+
 def generateMonsters():
 	if random.randint(1, 80) == 1: 
 		enemy = Enemy(random.choice(['zelda.png', 'mario.png', 'megaman.png']))
