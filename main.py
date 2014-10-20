@@ -10,8 +10,10 @@ screen_height = screen_h - 110
 gravity = +0.1
 objects = []
 shot_time = 1
+boss_timer = 0
 player = None
-score = 0
+generate = True
+# score = 0
 heart1, heart2, heart3 = None, None, None
 
 def load_png(name):
@@ -50,7 +52,7 @@ class MoveableSprite(pygame.sprite.Sprite):
 			self.speedy = 0
 			self.y = screen_height - self.image.get_height()
 
-		if self.x < -200 or self.x > screen_width + 200:
+		if self.x < -300 or self.x > screen_width + 200:
 			self.remove()
 
 	def remove(self):
@@ -64,6 +66,7 @@ class NonMoveableSprite(MoveableSprite):
 
 class Player(MoveableSprite):
 	shoot_delay = 0
+	score = 0
 	def __init__(self, image):
 		MoveableSprite.__init__(self, image)
 		self.shot_time = 0
@@ -89,14 +92,15 @@ class Player(MoveableSprite):
 	def shoot(self):
 		if self.can_shoot():
 			self.shot_time = time.time()
-			bullet = Bullet('bullet.png')
-			bullet.y = self.y + self.image.get_height() / 2
 			if self.image == self.rightimage:
+				bullet = Bullet('bullet_right.png')
 				bullet.speedx = 6
 				bullet.x = self.x + self.image.get_width()
 			else:
+				bullet = Bullet('bullet_left.png')
 				bullet.speedx = -6
-				bullet.x = self.x
+				bullet.x = self.x - 20
+			bullet.y = self.y + self.image.get_height() / 2
 
 	def update(self):
 		MoveableSprite.update(self)
@@ -108,7 +112,7 @@ class Player(MoveableSprite):
 
 	def check_collision(self):
 		for obj in objects:
-			if type(obj) == Enemy:
+			if issubclass(type(obj), Enemy):
 				if self.rect.colliderect(obj.rect):
 					obj.remove()	
 					if heart3 in objects:
@@ -120,6 +124,8 @@ class Player(MoveableSprite):
 						self.speedy = -1.5
 						self.allow_gravity = False
 
+class Attribute(NonMoveableSprite):
+	print('do somethin')
 
 class Bullet(MoveableSprite):
 	def __init__(self, image):
@@ -133,19 +139,43 @@ class Bullet(MoveableSprite):
 	def check_collision(self):
 		global score
 		for obj in objects:
-			if type(obj) == Enemy:
+			if issubclass(type(obj),Enemy):
 				if self.rect.colliderect(obj.rect):
-					obj.remove()
+					obj.health -= 1
 					self.remove()
-					score += 10
+					if obj.health == 0:
+						obj.remove()
+						Player.score += 10
+
+class Gun(Bullet):
+	print ('do somethin')
 
 class Enemy(MoveableSprite):
-	def __init__(self, image):
+	def __init__(self, image, health = 1):
 		MoveableSprite.__init__(self, image)
 		self.speedx = -3
 		self.x = screen_width
 		self.y = screen_height - self.image.get_height()
-		self.health = 1
+		self.health = health
+
+class Boss(Enemy):
+	def __init__(self, image = 'Bowser_left.png', health=200):
+		Enemy.__init__(self, image, health)
+		self.speedx = -.1
+		self.x = screen_width + 10
+
+class Scoreboard(Player):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.lives = 5
+        self.font = pygame.font.SysFont("None", 50)
+        
+    def update(self):
+        self.text = "Score: %d" % (Player.score)
+        self.image = self.font.render(self.text, 1, (75, 0, 130))
+        self.rect = self.image.get_rect(center = (400, 17))
+
+
 
 
 def main():
@@ -154,24 +184,23 @@ def main():
 	screen = pygame.display.set_mode((screen_width, screen_h))
 	pygame.display.set_caption('Hack Game')
 
-	background_image = pygame.image.load("background.jpg").convert()
-
-	"""font = pygame.font.Font(None,36)
-	text = font.render("Score: " + str(score), 1, (50,0,200))
-	textpos = text.get_rect()
-	textpos.centerx = background_image.get_rect().centerx"""
-	#background_image.blit(text,textpos)
+	background_image = pygame.image.load("data/background.jpg").convert()
 
 	screen.blit(background_image, (0, 0))
 	pygame.display.flip()
 	clock = pygame.time.Clock()
 	global heart1, heart2, heart3
 	heart1 = NonMoveableSprite('heart.png')
-	heart1.x, heart1.y = 0, 0
+	heart1.x, heart1.y = 5, 0
 	heart2 = NonMoveableSprite('heart.png')
-	heart2.x, heart2.y = 64, 0
+	heart2.x, heart2.y = 69, 0
 	heart3 = NonMoveableSprite('heart.png')
-	heart3.x, heart3.y = 128, 0
+	heart3.x, heart3.y = 133, 0
+
+	scoreboard = Scoreboard()
+	scoreSprite = pygame.sprite.Group(scoreboard)
+	pygame.mixer.music.load('music.mp3')
+	# pygame.mixer.music.play(0, 120)
 
 	global player
 	player = Player('player_right.png')
@@ -207,9 +236,11 @@ def main():
 			player.speedx = -movespeed
 		elif rightdown and not leftdown and player.speedx < 0:
 			player.speedx = movespeed
-			
-		#text = font.render("Score: " + str(score), 1, (50,0,200))
-		#screen.blit(text, (200, 50))
+
+		# Clears current scoreboard, and updates it with new score	
+		scoreSprite.clear(screen, background_image)
+		scoreSprite.update()
+		scoreSprite.draw(screen)
 
 		for obj in objects:
 			screen.blit(background_image, obj.rect, obj.rect)
@@ -219,20 +250,43 @@ def main():
 				objects.remove(obj)
 				screen.blit(background_image, obj.rect, obj.rect)
 		pygame.display.flip()
-		generateMonsters()
+
+		global generate
+		if generate:
+			generateMonsters()
+
+		if Boss not in [type(obj) for obj in objects]:
+			generate = True
+
+		# if int(time.time()) - int(boss_timer) == 7:
+		# 	enemy = Boss('Bowser_right.png')
+		# 	enemy.speedx *= -3
+		# 	enemy.x = -200
+
 		if heart1 not in objects:
 			font = pygame.font.Font(None,100)
-			text = font.render("YOU DIED! SCORE: " +str(score), 1, (255,0,00))
+			text = font.render("YOU DIED!", 1, (255,0,00))
 			textpos = text.get_rect()
 			textpos.centerx = background_image.get_rect().centerx
 			background_image.blit(text,textpos)
 			screen.blit(background_image, (0, 0))
+		if Player.score == 1000:
+			background_image = pygame.image.load("data/background2.jpg").convert()
+			screen.blit(background_image, (0, 0))
 
 def generateMonsters():
+	if Player.score == 200:
+		global generate, boss_timer
+		generate = False
+		boss_timer = time.time()
+		Boss()
+		pygame.mixer.music.play(0, 130)
+
 	if random.randint(1, 70) == 1: 
-		enemy = Enemy(random.choice(['zelda.png', 'mario.png', 'megaman.png']))
+		enemy = Enemy(random.choice(['zelda_left.png', 'mario_left.png', 'megaman_left.png', 'charizard_left.png']))
 		enemy.speedx *= 0.65 + random.random()
 		if random.randint(1, 3) == 1:
+			enemy = Enemy(random.choice(['zelda_right.png', 'charizard_right.png', 'mario_right.png', 'megaman_right.png']))
 			enemy.speedx *= -1
 			enemy.x = -50
 		if random.randint(1, 3) == 1:
