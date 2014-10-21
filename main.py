@@ -4,18 +4,20 @@ import os
 import random
 from pygame.locals import *
 
+lives = 3
 jump_speed = 3
 screen_width, screen_h = 800, 500
 screen_height = screen_h - 110
 gravity = +0.1
-objects = []
+sprites = []
+monsters = []
 shot_time = 1
 boss_timer = 0
 level_timer = 0
 player = None
 generate = True
 heart1, heart2, heart3 = None, None, None
-regular_monster_list = ['zelda.png', 'fish.png', 'megaman.png', 'charizard.png']
+regular_monster_list = ['phantom.png', 'fish.png', 'megaman.png', 'charizard.png']
 
 def memo(f):
     cache = {}
@@ -56,7 +58,7 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.speedx, self.speedy = 0, 0
 		self.allow_gravity = True
 		self.removing = False
-		objects.append(self)
+		sprites.append(self)
 
 	def update(self):
 		if self.allow_gravity:
@@ -72,9 +74,14 @@ class MoveableSprite(pygame.sprite.Sprite):
 			self.remove()
 
 		if self.image == self.rightimage and self.speedx < 0:
-			self.image = self.leftimage
+			self.face_left()
 		elif self.image == self.leftimage and self.speedx > 0:
-			self.image = self.rightimage
+			self.face_right()
+
+	def face_right(self):
+		self.image = self.rightimage
+	def face_left(self):
+		self.image = self.leftimage
 
 	def remove(self):
 		self.removing = True
@@ -94,6 +101,7 @@ class Player(MoveableSprite):
 		self.x = screen_width / 2
 		self.image = self.rightimage
 		self.is_alive = True
+		self.health = 3
 
 	def can_jump(self):
 		if self.speedy == 0:
@@ -120,6 +128,9 @@ class Player(MoveableSprite):
 			bullet.x = self.x - 20
 		bullet.y = self.y + self.image.get_height() / 2
 
+	def shoot_mouse(self, pos):
+		self.shot_time = time.time()
+
 	def update(self):
 		MoveableSprite.update(self)
 		self.check_collision()
@@ -129,19 +140,11 @@ class Player(MoveableSprite):
 			self.image = self.rightimage	
 
 	def check_collision(self):
-		for obj in objects:
+		for obj in sprites:
 			if issubclass(type(obj), Enemy):
 				if self.rect.colliderect(obj.rect):
 					obj.remove()	
-					if heart3 in objects:
-						heart3.remove()
-					elif heart2 in objects:
-						heart2.remove()
-					else:
-						heart1.remove()
-						self.speedy = -1.5
-						self.allow_gravity = False
-						self.is_alive = False
+					self.health -= 1
 
 class Attribute(NonMoveableSprite):
 	print('do somethin')
@@ -157,7 +160,7 @@ class Bullet(MoveableSprite):
 
 	def check_collision(self):
 		global score
-		for obj in objects:
+		for obj in sprites:
 			if isinstance(obj, Enemy):
 				if self.rect.colliderect(obj.rect):
 					obj.health -= 1
@@ -169,6 +172,7 @@ class Bullet(MoveableSprite):
 class Gun(object):
 	print ('do somethin')
 
+############# Enemies ###########
 class Enemy(MoveableSprite):
 	score = 10
 	def __init__(self, image, health = 1):
@@ -177,12 +181,48 @@ class Enemy(MoveableSprite):
 		self.x = screen_width
 		self.y = screen_height - self.image.get_height()
 		self.health = health
+		monsters.append(self)
+
+	def remove(self):
+		MoveableSprite.remove(self)
+		if self in monsters:
+			monsters.remove(self)
 
 class Boss(Enemy):
-	def __init__(self, image = 'Bowser_right.png', health=200):
+	def __init__(self, image = 'Bowser.png', health=200):
 		Enemy.__init__(self, image, health)
 		self.speedx = -.3
 		self.x = screen_width + 10
+
+class Fish(Enemy):
+	def __init__(self):
+		Enemy.__init__(self, 'fish.png')
+		self.speedy = 0
+
+	def update(self):
+		if self.speedy == 0:
+			if random.randint(1,11) < 7:
+				self.speedy = -random.random() * 2
+			else:
+				self.speedy = -(random.random() * 6)
+		Enemy.update(self)
+
+class Phantom(Enemy):
+	def __init__(self):
+		Enemy.__init__(self, 'phantom.png')
+		self.allow_gravity = False
+		self.y = random.randint(50, 200)
+
+
+	def update(self):
+		diffx = abs(self.x - player.x)
+		diffy = self.y - player.y
+		if diffx < 200 and diffx > 100:
+			self.speedy = diffy * -0.02
+		Enemy.update(self)
+
+####################################
+
 
 class Scoreboard(Player):
     def __init__(self):
@@ -207,21 +247,21 @@ def main():
 	pygame.display.flip()
 	clock = pygame.time.Clock()
 
-	global heart1, heart2, heart3
-	heart1 = NonMoveableSprite('heart.png')
-	heart1.x, heart1.y = 5, 0
-	heart2 = NonMoveableSprite('heart.png')
-	heart2.x, heart2.y = 69, 0
-	heart3 = NonMoveableSprite('heart.png')
-	heart3.x, heart3.y = 133, 0
+	global player
+	player = Player()
+	hearts = []
+	for i in range(player.health):
+		heart = NonMoveableSprite('heart.png')
+		hearts.append(heart)
+		heart.x = i * 70 + 5
+		heart.y = 0
 
 	scoreboard = Scoreboard()
 	scoreSprite = pygame.sprite.Group(scoreboard)
 	pygame.mixer.music.load('music.mp3')
 	# pygame.mixer.music.play(0, 120)
 
-	global player
-	player = Player()
+	global generate, level_timer
 	leftdown, rightdown = False, False	
 	i = 0
 	while True:
@@ -240,7 +280,10 @@ def main():
 					rightdown = True
 					player.speedx = Player.movespeed
 				elif event.key == K_z and player.can_shoot():
-					player.shoot()					
+					player.shoot()	
+			elif event.type == MOUSEBUTTONDOWN:
+				if event.button == 1 and player.can_shoot():
+					player.shoot_mouse(event.pos)			
 			elif event.type == KEYUP:
 				if event.key == K_LEFT:
 					leftdown = False
@@ -259,23 +302,27 @@ def main():
 		scoreSprite.update()
 		scoreSprite.draw(screen)
 
-		for obj in objects:
+		# Update and paint sprites
+		for obj in sprites:
 			screen.blit(background_image, obj.rect, obj.rect)
 			obj.renderer.update()
 			obj.renderer.draw(screen)
 			if obj.removing:
-				objects.remove(obj)
+				sprites.remove(obj)
 				screen.blit(background_image, obj.rect, obj.rect)
 		pygame.display.flip()
 
-		global generate, level_timer
-		if generate:
-			generateMonsters()
+		# Update health
+		if player.health < len(hearts) and hearts != []:
+			heart = hearts[len(hearts) - 1]
+			heart.remove()
+			hearts.remove(heart)
 
-		if Boss not in [type(obj) for obj in objects]:
-			generate = True
 
-		if heart1.removing:
+		if len(hearts) == 0:
+			player.speedy = -1.5
+			player.allow_gravity = False
+			player.is_alive = False
 			font = pygame.font.Font(None,100)
 			text = font.render("YOU DIED!", 1, (255,0,00))
 			textpos = text.get_rect()
@@ -288,12 +335,13 @@ def main():
 			screen.blit(background_image, (0, 0))
 			level_timer = time.time()
 
-		monsters = [obj for obj in objects if issubclass(type(obj), Enemy)]
-
-		if Boss not in [type(obj) for obj in objects] and Player.score + len(monsters)*10 != 200:
+		if Boss not in monsters and Player.score + len(monsters) * 10 != 200:
 			generate = True
 		else:
 			generate = False
+
+		if generate:
+			generateMonsters()
 
 
 def generateMonsters():
@@ -304,13 +352,10 @@ def generateMonsters():
 		Boss()
 		pygame.mixer.music.play(0, 130)
 
-	if random.randint(1, 70) == 1: 
-		enemy = Enemy(random.choice(regular_monster_list))
+	elif random.randint(1, 200) == 1: 
+		#enemy = Enemy(random.choice(regular_monster_list))
+		enemy = random.choice([Enemy('charizard.png'), Enemy('megaman.png'), Fish(), Phantom()])
 		enemy.speedx *= 0.65 + random.random()
-		if random.randint(1, 3) == 1:
-			enemy.speedx *= -1
-			enemy.x = -50
-		if random.randint(1, 3) == 1:
-			enemy.speedy = -random.randint(3,8)
+
 		
 main()
