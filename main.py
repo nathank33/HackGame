@@ -11,6 +11,7 @@ gravity = +0.1
 objects = []
 shot_time = 1
 boss_timer = 0
+level_timer = 0
 player = None
 generate = True
 # score = 0
@@ -161,7 +162,7 @@ class Enemy(MoveableSprite):
 class Boss(Enemy):
 	def __init__(self, image = 'Bowser_left.png', health=200):
 		Enemy.__init__(self, image, health)
-		self.speedx = -.1
+		self.speedx = -.3
 		self.x = screen_width + 10
 
 class Scoreboard(Player):
@@ -251,17 +252,12 @@ def main():
 				screen.blit(background_image, obj.rect, obj.rect)
 		pygame.display.flip()
 
-		global generate
+		global generate, level_timer
 		if generate:
 			generateMonsters()
 
 		if Boss not in [type(obj) for obj in objects]:
 			generate = True
-
-		# if int(time.time()) - int(boss_timer) == 7:
-		# 	enemy = Boss('Bowser_right.png')
-		# 	enemy.speedx *= -3
-		# 	enemy.x = -200
 
 		if heart1 not in objects:
 			font = pygame.font.Font(None,100)
@@ -270,9 +266,27 @@ def main():
 			textpos.centerx = background_image.get_rect().centerx
 			background_image.blit(text,textpos)
 			screen.blit(background_image, (0, 0))
-		if Player.score == 1000:
-			background_image = pygame.image.load("data/background2.jpg").convert()
+
+		if Player.score == 200 and time.time() - level_timer > 50:
+			background_image = pygame.image.load("data/level_2.jpg").convert()
 			screen.blit(background_image, (0, 0))
+			level_timer = time.time()
+
+		# global generate
+		# if generate:
+		# 	generateMonsters()
+
+		monsters = [obj for obj in objects if issubclass(type(obj), Enemy)]
+
+		if Boss not in [type(obj) for obj in objects] and Player.score + len(monsters)*10 != 200:
+			generate = True
+		# elif time.time() - level_timer < 5:
+		# 	generate = False
+		else:
+			generate = False
+
+
+
 
 def generateMonsters():
 	if Player.score == 200:
