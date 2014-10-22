@@ -2,6 +2,7 @@ import pygame
 import time
 import os
 import random
+from math import sin, cos, atan2, degrees
 from pygame.locals import *
 
 lives = 3
@@ -17,7 +18,7 @@ level_timer = 0
 player = None
 generate = True
 heart1, heart2, heart3 = None, None, None
-regular_monster_list = ['phantom.png', 'fish.png', 'megaman.png', 'charizard.png']
+bosses_spawned = []
 
 def memo(f):
     cache = {}
@@ -57,6 +58,7 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.x, self.y = 0, screen_height - self.image.get_height()
 		self.speedx, self.speedy = 0, 0
 		self.allow_gravity = True
+		self.allow_ground = True
 		self.removing = False
 		sprites.append(self)
 
@@ -66,11 +68,13 @@ class MoveableSprite(pygame.sprite.Sprite):
 		self.x += self.speedx
 		self.y += self.speedy
 		self.rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
-		if self.y + self.image.get_height() >= screen_height:
-			self.speedy = 0
-			self.y = screen_height - self.image.get_height()
+		
+		if self.allow_ground:
+			if self.y + self.image.get_height() >= screen_height:
+				self.speedy = 0
+				self.y = screen_height - self.image.get_height()
 
-		if self.x < -300 or self.x > screen_width + 200:
+		if self.x < -300 or self.x > screen_width + 200 or self.y < -300 or self.y > screen_height + 200:
 			self.remove()
 
 		if self.image == self.rightimage and self.speedx < 0:
@@ -79,11 +83,15 @@ class MoveableSprite(pygame.sprite.Sprite):
 			self.face_right()
 
 	def face_right(self):
+		""" Sets the current image to the rightward image """
 		self.image = self.rightimage
+
 	def face_left(self):
+		""" Sets the current image to the leftward image """
 		self.image = self.leftimage
 
 	def remove(self):
+		""" Tells the main thread that this instance needs to be removed """
 		self.removing = True
 		
 class NonMoveableSprite(MoveableSprite):
@@ -104,16 +112,19 @@ class Player(MoveableSprite):
 		self.health = 3
 
 	def can_jump(self):
+		""" Returns true if the player can jump """
 		if self.speedy == 0:
 			return True 
 		return False
 
 	def can_shoot(self):
+		""" Returns true if the player can shoot """
 		if self.is_alive and time.time() - self.shot_time >= self.shoot_delay:
 			return True
 		return False
 
 	def jump(self):
+		""" Attempts to cause the player to jump """
 		if self.can_jump():
 			self.speedy = -5
 
@@ -129,7 +140,21 @@ class Player(MoveableSprite):
 		bullet.y = self.y + self.image.get_height() / 2
 
 	def shoot_mouse(self, pos):
+		""" Shoots a bullet based on the position of a mouse click """
 		self.shot_time = time.time()
+		xdiff = pos[0] - self.x
+		ydiff = pos[1] - self.y
+		theta = atan2(ydiff, xdiff)
+		bullet = Bullet()
+		bullet.speedx = cos(theta) * 6
+		bullet.speedy = sin(theta) * 6
+		bullet.refresh_image()
+		bullet.y = self.y + self.image.get_height() / 2
+		bullet.x = self.x + self.image.get_width() / 2
+		if self.image == self.leftimage:
+			bullet.x = self.x - self.image.get_width() / 2
+			
+		
 
 	def update(self):
 		MoveableSprite.update(self)
@@ -140,6 +165,7 @@ class Player(MoveableSprite):
 			self.image = self.rightimage	
 
 	def check_collision(self):
+		""" Checks if the player has collided with an enemy """
 		for obj in sprites:
 			if issubclass(type(obj), Enemy):
 				if self.rect.colliderect(obj.rect):
@@ -153,21 +179,27 @@ class Bullet(MoveableSprite):
 	def __init__(self, image='bullet.png'):
 		MoveableSprite.__init__(self, image)
 		self.allow_gravity = False
+		self.allow_ground = False
 
 	def update(self):
 		MoveableSprite.update(self)
 		self.check_collision()
 
+	def refresh_image(self):
+		""" Rotates the image based on the bullet direction """
+		theta = atan2(self.speedy, self.speedx)
+		rotated = pygame.transform.rotate(self.image, degrees(-theta))
+		self.image, self.leftimage, self.rightimage = rotated, rotated, rotated
+
 	def check_collision(self):
+		""" Checks if the bullet has collided with an enemy
+		and then calls the enemy's bullet collision method """
 		global score
 		for obj in sprites:
 			if isinstance(obj, Enemy):
 				if self.rect.colliderect(obj.rect):
-					obj.health -= 1
-					self.remove()
-					if obj.health == 0:
-						obj.remove()
-						Player.score += obj.score
+					obj.bullet_collision(self)
+					
 
 class Gun(object):
 	print ('do somethin')
@@ -182,6 +214,13 @@ class Enemy(MoveableSprite):
 		self.y = screen_height - self.image.get_height()
 		self.health = health
 		monsters.append(self)
+
+	def bullet_collision(self, bullet):
+		bullet.remove()
+		self.health -= 1
+		if self.health == 0:
+			self.remove()
+			Player.score += self.score
 
 	def remove(self):
 		MoveableSprite.remove(self)
@@ -204,6 +243,8 @@ class Boss(Enemy):
 		Enemy.update(self)
 
 class Fish(Enemy):
+	""" A fish has the sporatic behavior of jumping up and down randomly """
+	score = 8
 	def __init__(self):
 		Enemy.__init__(self, 'fish.png')
 		self.speedy = 0
@@ -217,6 +258,9 @@ class Fish(Enemy):
 		Enemy.update(self)
 
 class Phantom(Enemy):
+	""" A phantom flies straight until it gets close to the player, 
+	then it dive bombs the player """
+	score = 12
 	def __init__(self):
 		Enemy.__init__(self, 'phantom.png')
 		self.allow_gravity = False
@@ -227,8 +271,23 @@ class Phantom(Enemy):
 		diffx = abs(self.x - player.x)
 		diffy = self.y - player.y
 		if diffx < 200 and diffx > 100:
-			self.speedy = diffy * -0.02
+			self.speedy = diffy * -0.04
 		Enemy.update(self)
+
+class Megaman(Enemy):
+	""" The megaman enemy can reflect the players bullets. """
+	def __init__(self):
+		Enemy.__init__(self, 'megaman.png')
+
+	def bullet_collision(self, bullet):
+		if random.random() < 0.50:
+			bullet.speedx = -bullet.speedx
+			bullet.speedy = -bullet.speedy
+			bullet.x += bullet.speedx
+			bullet.y += bullet.speedy
+		else:
+			Enemy.bullet_collision(self, bullet)
+
 
 ####################################
 
@@ -280,12 +339,12 @@ def main():
 			if event.type == QUIT:
 				return
 			elif event.type == KEYDOWN:
-				if event.key == K_SPACE:
+				if event.key == K_SPACE or event.key == K_w or event.key == K_UP:
 					player.jump()
-				elif event.key == K_LEFT:
+				elif event.key == K_LEFT or event.key == K_a:
 					leftdown = True
 					player.speedx = -Player.movespeed
-				elif event.key == K_RIGHT:
+				elif event.key == K_RIGHT or event.key == K_d:
 					rightdown = True
 					player.speedx = Player.movespeed
 				elif event.key == K_z and player.can_shoot():
@@ -294,9 +353,9 @@ def main():
 				if event.button == 1 and player.can_shoot():
 					player.shoot_mouse(event.pos)			
 			elif event.type == KEYUP:
-				if event.key == K_LEFT:
+				if event.key == K_LEFT or event.key == K_a:
 					leftdown = False
-				elif event.key == K_RIGHT:
+				elif event.key == K_RIGHT or event.key == K_d:
 					rightdown = False
 
 		if not leftdown and not rightdown and player.speedx != 0:
@@ -339,10 +398,15 @@ def main():
 			background_image.blit(text,textpos)
 			screen.blit(background_image, (0, 0))
 
-		if Player.score == 200 and time.time() - level_timer > 50:
+		global boss_timer
+		if Player.score >= 200 and time.time() - level_timer > 50 and "bowser" not in bosses_spawned:
+			bosses_spawned.append("bowser")
 			background_image = pygame.image.load("data/level_2.jpg").convert()
 			screen.blit(background_image, (0, 0))
 			level_timer = time.time()
+			boss_timer = time.time()
+			Boss()
+			pygame.mixer.music.play(0, 130)
 
 		if Boss not in [type(monster) for monster in monsters]:
 			generate = True
@@ -352,14 +416,7 @@ def main():
 
 
 def generateMonsters():
-	if Player.score == 200:
-		global generate, boss_timer
-		generate = False
-		boss_timer = time.time()
-		Boss()
-		pygame.mixer.music.play(0, 130)
-
-	elif random.randint(1, 50) == 1: 
+	if random.randint(1, 50) == 1: 
 		chance = random.randint(1,4)
 		if chance == 1:
 			enemy = Fish()
@@ -368,8 +425,11 @@ def generateMonsters():
 		elif chance == 3:
 			enemy = Enemy('charizard.png')
 		elif chance == 4:
-			enemy = Enemy('megaman.png')
+			enemy = Megaman()
 		enemy.speedx *= .65 + random.random()
 
-		
+		if random.random() < 0.50:
+			enemy.speedx = -enemy.speedx
+			enemy.x = -enemy.image.get_width()
+	
 main()
