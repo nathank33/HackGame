@@ -189,10 +189,19 @@ class Enemy(MoveableSprite):
 			monsters.remove(self)
 
 class Boss(Enemy):
-	def __init__(self, image = 'Bowser.png', health=200):
+	score = 100
+	jump_time = 0
+	def __init__(self, image = 'Bowser.png', health=100):
 		Enemy.__init__(self, image, health)
-		self.speedx = -.3
+		self.speedx = -.5
 		self.x = screen_width + 10
+
+	def update(self):
+		if self.speedy == 0:
+			if time.time() - self.jump_time > 10:
+				self.speedy = -6
+				self.jump_time = time.time()
+		Enemy.update(self)
 
 class Fish(Enemy):
 	def __init__(self):
@@ -335,12 +344,10 @@ def main():
 			screen.blit(background_image, (0, 0))
 			level_timer = time.time()
 
-		if Boss not in monsters and Player.score + len(monsters) * 10 != 200:
+		if Boss not in [type(monster) for monster in monsters]:
 			generate = True
-		else:
-			generate = False
 
-		if generate:
+		if generate and time.time() - boss_timer > 30:
 			generateMonsters()
 
 
@@ -352,10 +359,17 @@ def generateMonsters():
 		Boss()
 		pygame.mixer.music.play(0, 130)
 
-	elif random.randint(1, 200) == 1: 
-		#enemy = Enemy(random.choice(regular_monster_list))
-		enemy = random.choice([Enemy('charizard.png'), Enemy('megaman.png'), Fish(), Phantom()])
-		enemy.speedx *= 0.65 + random.random()
+	elif random.randint(1, 50) == 1: 
+		chance = random.randint(1,4)
+		if chance == 1:
+			enemy = Fish()
+		elif chance == 2:
+			enemy = Phantom()
+		elif chance == 3:
+			enemy = Enemy('charizard.png')
+		elif chance == 4:
+			enemy = Enemy('megaman.png')
+		enemy.speedx *= .65 + random.random()
 
 		
 main()
