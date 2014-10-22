@@ -188,7 +188,7 @@ class Player(MoveableSprite):
 					hearts.append(heart)
 					heart.x = (len(hearts) - 1) * 50 + 5
 					heart.y = 0
-			if type(obj) == Bullet and obj.name_image == 'megaman_bullet.png':
+			if type(obj) == Bullet and obj.name_image != 'bullet.png':
 				if self.rect.colliderect(obj.rect):
 					obj.remove()
 					self.health -= 1
