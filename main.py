@@ -346,12 +346,11 @@ class Phantom(Enemy):
 		self.allow_gravity = False
 		self.y = random.randint(50, 200)
 
-
 	def update(self):
 		diffx = abs(self.x - player.x)
 		diffy = self.y - player.y
 		if diffx < 250 and diffx > 150:
-			self.speedy = diffy * -0.04
+			self.speedy = -diffy * min(0.02 * level, 0.06)
 		Enemy.update(self)
 
 class MegamanRed(Enemy):
@@ -521,7 +520,6 @@ def main():
 		if generate:
 			generateMonsters()
 
-
 def generateMonsters():
 	if random.random() <= 0.02 + (0.01 * level): 
 		chance = random.randint(1,4)
@@ -549,6 +547,7 @@ def draw_healthbars(screen):
 def remove_healthbars(screen, background):
 	for rect in healthbars:
 		screen.blit(background, rect, rect)
+		healthbars.remove(rect)
 
 main()
 
