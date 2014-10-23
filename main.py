@@ -184,12 +184,17 @@ class Player(MoveableSprite):
 					self.health -= 1
 			if type(obj) == ExtraLife:
 				if self.rect.colliderect(obj.rect):
-					obj.remove()
-					self.health += 1
 					heart = NonMoveableSprite('heart.png')
 					hearts.append(heart)
-					heart.x = (len(hearts) - 1) * 50 + 5
-					heart.y = 0
+					if self.health <= 5:
+						heart.x = (len(hearts) - 1) * 50 + 5
+						heart.y = 0
+					else:
+						heart.x = (len(hearts) - 7) * 50 + 5
+						heart.y = 55
+					obj.remove()
+					self.health += 1
+
 			if type(obj) == Bullet and obj.harmful_to_player:
 				if self.rect.colliderect(obj.rect):
 					obj.remove()
@@ -402,6 +407,10 @@ def main():
 		hearts.append(heart)
 		heart.x = i * 50 + 5
 		heart.y = 0
+
+	ExtraLife()
+	ExtraLife()
+	ExtraLife()
 
 	scoreboard = Scoreboard()
 	scoreSprite = pygame.sprite.Group(scoreboard)
