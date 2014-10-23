@@ -407,11 +407,7 @@ def main():
 		hearts.append(heart)
 		heart.x = i * 50 + 5
 		heart.y = 0
-
-	ExtraLife()
-	ExtraLife()
-	ExtraLife()
-
+		
 	scoreboard = Scoreboard()
 	scoreSprite = pygame.sprite.Group(scoreboard)
 	pygame.mixer.music.load('music.mp3')
