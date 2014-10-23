@@ -109,7 +109,7 @@ class ExtraLife(MoveableSprite):
 		self.x = screen_width / 2
 		self.y = 0
 		self.speedx = 0
-		self.speedy = .2
+		self.speedy = .1
 
 class Player(MoveableSprite):
 	shoot_delay = 0
@@ -350,7 +350,7 @@ class Phantom(Enemy):
 		diffx = abs(self.x - player.x)
 		diffy = self.y - player.y
 		if diffx < 250 and diffx > 150:
-			self.speedy = -diffy * min(0.02 * level, 0.06)
+			self.speedy = -diffy * min(0.03 * level, 0.06)
 		Enemy.update(self)
 
 class MegamanRed(Enemy):
