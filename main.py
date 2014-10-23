@@ -6,6 +6,7 @@ from math import sin, cos, atan2, degrees
 from pygame.locals import *
 
 lives = 3
+level = 1
 jump_speed = 3
 screen_width, screen_h = 800, 500
 screen_height = screen_h - 110
@@ -13,13 +14,15 @@ gravity = +0.1
 sprites = []
 monsters = []
 hearts = []
+healthbars = []
+bosses_spawned = []
 shot_time = 1
 boss_timer = 0
 level_timer = 0
 player = None
 generate = True
 heart1, heart2, heart3 = None, None, None
-bosses_spawned = []
+
 
 def memo(f):
     cache = {}
@@ -162,7 +165,6 @@ class Player(MoveableSprite):
 		bullet.x = self.x + self.image.get_width() / 2
 		if self.image == self.leftimage:
 			bullet.x = self.x - self.image.get_width() / 2
-			
 		
 
 	def update(self):
@@ -188,7 +190,7 @@ class Player(MoveableSprite):
 					hearts.append(heart)
 					heart.x = (len(hearts) - 1) * 50 + 5
 					heart.y = 0
-			if type(obj) == Bullet and obj.name_image != 'bullet.png':
+			if type(obj) == Bullet and obj.harmful_to_player:
 				if self.rect.colliderect(obj.rect):
 					obj.remove()
 					self.health -= 1
@@ -203,6 +205,7 @@ class Bullet(MoveableSprite):
 		self.allow_gravity = False
 		self.allow_ground = False
 		self.name_image = image
+		self.harmful_to_player = False
 
 	def update(self):
 		MoveableSprite.update(self)
@@ -230,12 +233,13 @@ class Gun(object):
 ############# Enemies ###########
 class Enemy(MoveableSprite):
 	score = 10
-	def __init__(self, image, health = 1):
+	health = 1
+	def __init__(self, image):
 		MoveableSprite.__init__(self, image)
 		self.speedx = -3
 		self.x = screen_width
 		self.y = screen_height - self.image.get_height()
-		self.health = health
+		self.health = type(self).health
 		monsters.append(self)
 
 	def bullet_collision(self, bullet):
@@ -252,15 +256,16 @@ class Enemy(MoveableSprite):
 
 class Boss(Enemy):
 	score = 100
-	def __init__(self, image, health):
-		Enemy.__init__(self, image, health)
+	def __init__(self, image):
+		Enemy.__init__(self, image)
 		self.speedx = -.5
 		self.x = screen_width + 10
 
 class Bowser(Boss):
 	jump_time = 0
-	def __init__(self, image = 'Bowser.png', health = 100):
-		Boss.__init__(self,image,health)
+	health = 100
+	def __init__(self, image = 'Bowser.png'):
+		Boss.__init__(self,image)
 		self.speedx = -.5
 		self.x = screen_width + 50
 
@@ -271,13 +276,14 @@ class Bowser(Boss):
 				self.jump_time = time.time()
 		if self.health == 0:
 			ExtraLife()
-		Enemy.update(self)
+		Boss.update(self)
 
 class Pidgeot(Boss):
 	attack_cooldown = 5
 	score = 150
-	def __init__(self, image = 'Pidgeot!.png', health = 50):
-		Boss.__init__(self, image, health)
+	health = 50
+	def __init__(self, image = 'Pidgeot!.png'):
+		Boss.__init__(self, image)
 		self.speedx = 1
 		self.y = 150
 		self.x = -100 - self.image.get_width()
@@ -286,32 +292,35 @@ class Pidgeot(Boss):
 	def update(self):
 		if self.health == 0:
 			ExtraLife()
-		Enemy.update(self)
+		Boss.update(self)
 
 class MegaMan(Boss):
 	shoot_delay = 2.5
 	score = 200
 	shot_time = 0
-	def __init__(self, image = 'megaman.png', health = 75):
-		Boss.__init__(self,image,health)
+	bullet_speed = 6
+	health = 75
+	def __init__(self, image='megaman.png'):
+		Boss.__init__(self, image)
 		self.speedx = .5
 		self.x = - 100 - self.image.get_width()
 
 	def update(self):
 		if time.time() - self.shot_time > self.shoot_delay:
 			bullet = Bullet('megaman_bullet.png')
+			bullet.harmful_to_player = True
 			if self.image == self.rightimage:
-				bullet.speedx = 6
+				bullet.speedx = self.bullet_speed
 				bullet.x = self.x + self.image.get_width()
 			else:
-				bullet.speedx = -6
+				bullet.speedx = -self.bullet_speed
 				bullet.x = self.x + 20
 			bullet.y = screen_height - self.image.get_height() / 2 - 15
 			self.shot_time = time.time()
 
 		if self.health == 0:
 			ExtraLife()
-		Enemy.update(self)		
+		Boss.update(self)	
 
 class Fish(Enemy):
 	""" A fish has the sporatic behavior of jumping up and down randomly """
@@ -351,11 +360,12 @@ class MegamanRed(Enemy):
 		Enemy.__init__(self, 'megaman_red.png')
 
 	def bullet_collision(self, bullet):
-		if random.random() < 0.15:
+		if random.random() < min(0.15 * level, 50):
 			bullet.speedx = -bullet.speedx
 			bullet.speedy = -bullet.speedy
 			bullet.x += bullet.speedx
 			bullet.y += bullet.speedy
+			bullet.refresh_image()
 		else:
 			Enemy.bullet_collision(self, bullet)
 
@@ -435,16 +445,23 @@ def main():
 		elif rightdown and not leftdown and player.speedx < 0:
 			player.speedx = Player.movespeed
 
+		remove_healthbars(screen, background_image)
+
 		# Clears current scoreboard, and updates it with new score	
 		scoreSprite.clear(screen, background_image)
 		scoreSprite.update()
 		scoreSprite.draw(screen)
 
-		# Update and paint sprites
+		draw_healthbars(screen)
+		# Clear old images:
 		for obj in sprites:
 			screen.blit(background_image, obj.rect, obj.rect)
+
+		# Update and paint sprites
+		for obj in sprites:
 			obj.renderer.update()
 			obj.renderer.draw(screen)
+
 			if obj.removing:
 				sprites.remove(obj)
 				screen.blit(background_image, obj.rect, obj.rect)
@@ -469,39 +486,44 @@ def main():
 			screen.blit(background_image, (0, 0))
 
 		global boss_timer
-		if Player.score >= 300 and Player.score < 700 and "bowser" not in bosses_spawned:
+		if Player.score >= 300 and "bowser" not in bosses_spawned:
 			bosses_spawned.append("bowser")
 			background_image = pygame.image.load("data/level_2.jpg").convert()
 			screen.blit(background_image, (0, 0))
 			# level_timer = time.time()
-			boss_timer = time.time()
+			#boss_timer = time.time()
 			Bowser()
 			pygame.mixer.music.play(0, 130)
+			level = 2
 
-		if Player.score >= 700 and Player.score < 1500 and "Pidgeot" not in bosses_spawned:
+		if Player.score >= 700 and "Pidgeot" not in bosses_spawned:
 			bosses_spawned.append("Pidgeot")
 			background_image = pygame.image.load("data/level_3.jpg")
 			screen.blit(background_image, (0, 0))
-			boss_timer = time.time()
+			#boss_timer = time.time()
 			Pidgeot()
+			level = 3
 
 		if Player.score >= 1500 and "MegaMan" not in bosses_spawned:
 			bosses_spawned.append("MegaMan")
 			background_image = pygame.image.load("data/level_4.jpg")
 			screen.blit(background_image, (0,0))
-			boss_timer = time.time()
+			#boss_timer = time.time()
 			MegaMan()
+			level = 4
 
 
-		if Boss not in [type(monster) for monster in monsters]:
+		if True not in [isinstance(monster, Boss) for monster in monsters]:
 			generate = True
+		else:
+			generate = False
 
-		if generate and time.time() - boss_timer > 30:
+		if generate:
 			generateMonsters()
 
 
 def generateMonsters():
-	if random.randint(1, 50) == 1: 
+	if random.random() <= 0.02 + (0.01 * level): 
 		chance = random.randint(1,4)
 		if chance == 1:
 			enemy = Fish()
@@ -511,10 +533,24 @@ def generateMonsters():
 			enemy = Enemy('charizard.png')
 		elif chance == 4:
 			enemy = MegamanRed()
-		enemy.speedx *= .65 + random.random()
+		enemy.speedx *= .65 + (random.random() * (level / 2))
 
 		if random.random() < 0.50:
 			enemy.speedx = -enemy.speedx
 			enemy.x = -enemy.image.get_width()
 	
+def draw_healthbars(screen):
+	for obj in sprites:
+		if isinstance(obj, Enemy) and obj.health > 1:
+			rect = Rect(obj.x, obj.y - 10, obj.image.get_width() * (obj.health / type(obj).health), 5)
+			pygame.draw.rect(screen, (255, 0, 0), rect, 0)
+			healthbars.append(rect)
+
+def remove_healthbars(screen, background):
+	for rect in healthbars:
+		screen.blit(background, rect, rect)
+
 main()
+
+
+
